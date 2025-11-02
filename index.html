@@ -4,14 +4,423 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0f172a" />
+  <!-- iOS PWA meta -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <!-- PWA manifest -->
   <link rel="manifest" href="manifest.webmanifest" />
   <title>金钱管理</title>
+  <style>
+    :root{
+      --bg:#0f172a; /* slate-900 */
+      --card:#111827; /* gray-900 */
+      --muted:#94a3b8; /* slate-400 */
+      --text:#e5e7eb; /* gray-200 */
+      --accent:#22c55e; /* green-500 */
+      --danger:#ef4444; /* red-500 */
+      --ring:#334155; /* slate-700 */
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";background:linear-gradient(180deg,#0b1324 0%, #0f172a 100%);color:var(--text)}
+    .container{max-width:1100px;margin:40px auto;padding:0 16px}
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:20px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:40px;height:40px;border-radius:12px;background:radial-gradient(circle at 30% 30%, #34d399, #059669 60%, #064e3b 100%);box-shadow:0 8px 24px rgba(34,197,94,.25)}
+    h1{font-size:20px;margin:0;letter-spacing:.5px}
+    .card{background:rgba(17,24,39,.6);border:1px solid rgba(148,163,184,.12);backdrop-filter:blur(6px);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .balance-card{padding:22px}
+    .balance-label{color:var(--muted);font-size:14px}
+    .balance-value{font-size:40px;font-weight:700;letter-spacing:.5px;margin-top:4px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    button{border:1px solid var(--ring);background:#0b1223;color:var(--text);padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;transition:transform .05s ease, box-shadow .2s ease, border-color .2s ease}
+    button:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,0,0,.25);border-color:#475569}
+    .btn-income{border-color:#14532d;background:linear-gradient(180deg,#052e1a,#0a3a23)}
+    .btn-income:hover{box-shadow:0 8px 20px rgba(34,197,94,.25)}
+    .btn-expense{border-color:#7f1d1d;background:linear-gradient(180deg,#2a0b0b,#3a0a0a)}
+    .btn-expense:hover{box-shadow:0 8px 20px rgba(239,68,68,.25)}
+    .btn-clear{border-color:#374151}
+    .actions button{padding:14px 18px;font-size:16px}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0;padding:14px 16px}
+    .toolbar input[type="text"]{flex:1;min-width:220px;border:1px solid var(--ring);background:#0b1223;color:var(--text);padding:10px 12px;border-radius:10px}
+    .toolbar .export{margin-left:auto;display:flex;gap:10px}
+
+    .table-wrap{overflow:auto;border-top:1px solid rgba(148,163,184,.12)}
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:780px}
+    thead th{position:sticky;top:0;background:#0e1528;z-index:1}
+    th,td{padding:12px 14px;text-align:left;border-bottom:1px solid rgba(148,163,184,.12)}
+    tr:hover td{background:rgba(2,6,23,.35)}
+    .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid #1f2937}
+    .pill.in{background:rgba(34,197,94,.12);border-color:#14532d;color:#86efac}
+    .pill.out{background:rgba(239,68,68,.12);border-color:#7f1d1d;color:#fca5a5}
+    .amount.pos{color:#86efac;font-weight:700}
+    .amount.neg{color:#fca5a5;font-weight:700}
+    .muted{color:var(--muted)}
+
+    /* Dialog */
+    dialog{border:none;border-radius:16px;padding:0;max-width:520px;width:92%;background:#0b1223;color:var(--text);box-shadow:0 20px 60px rgba(0,0,0,.4);}
+    .dialog-header{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid rgba(148,163,184,.12)}
+    .dialog-body{padding:18px}
+    .dialog-footer{display:flex;justify-content:flex-end;gap:10px;padding:16px 18px;border-top:1px solid rgba(148,163,184,.12)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    label{font-size:12px;color:var(--muted)}
+    input, select, textarea{width:100%;border:1px solid var(--ring);background:#0b1223;color:var(--text);padding:10px 12px;border-radius:10px}
+    textarea{min-height:70px;resize:vertical}
+
+    /* Small */
+    @media (max-width:640px){
+      .grid{grid-template-columns:1fr}
+      .balance-value{font-size:32px}
+    }
+  </style>
+  <script>
+    // 注册 Service Worker（PWA）
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(console.error);
+      });
+    }
+  </script>
 </head>
 <body>
-  <h1>金钱管理网页</h1>
-  <p>请使用完整版代码文件以获得全部功能。</p>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <h1>金钱管理（本地）</h1>
+      </div>
+      <div class="actions">
+        <button class="btn-income" id="btn-income">＋ 记录收入</button>
+        <button class="btn-expense" id="btn-expense">－ 记录支出</button>
+        <button class="btn-clear" id="btn-clear" title="清空全部记录（需确认）">清空</button>
+      </div>
+    </header>
+
+    <section class="card balance-card" aria-live="polite">
+      <div class="balance-label">当前余额</div>
+      <div class="balance-value" id="balance">¥ 0</div>
+    </section>
+
+    <div class="card toolbar">
+      <input type="text" id="search" placeholder="搜索项目、操作员、备注…" />
+      <select id="typeFilter" title="类型筛选">
+        <option value="all">全部类型</option>
+        <option value="income">收入</option>
+        <option value="expense">支出</option>
+      </select>
+      <select id="sortBy" title="排序">
+        <option value="date_desc">按时间（新→旧）</option>
+        <option value="date_asc">按时间（旧→新）</option>
+        <option value="amount_desc">金额（高→低）</option>
+        <option value="amount_asc">金额（低→高）</option>
+      </select>
+      <div class="export">
+        <button id="exportCsv">导出 CSV</button>
+        <button id="exportJson">导出 JSON</button>
+      </div>
+    </div>
+
+    <div class="card table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>时间</th>
+            <th>类型</th>
+            <th>项目名称</th>
+            <th>操作员</th>
+            <th>备注</th>
+            <th>金额</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Dialog -->
+  <dialog id="editor">
+    <form id="form" method="dialog">
+      <div class="dialog-header">
+        <strong id="dialogTitle">新增记录</strong>
+        <button type="button" id="closeDialog" aria-label="关闭" style="background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer">×</button>
+      </div>
+      <div class="dialog-body">
+        <input type="hidden" id="recordId" />
+        <input type="hidden" id="recordType" />
+        <div class="grid">
+          <div>
+            <label for="amount">金额</label>
+            <input id="amount" type="number" step="0.01" min="0" required placeholder="例如：199.99" />
+          </div>
+          <div>
+            <label for="time">时间</label>
+            <input id="time" type="datetime-local" required />
+          </div>
+          <div>
+            <label for="item">项目名称</label>
+            <select id="item" required>
+              <option value="お小遣い">お小遣い</option>
+              <option value="バス代">バス代</option>
+              <option value="移動支援">移動支援</option>
+              <option value="その他">その他</option>
+            </select>
+          </div>
+          <div>
+            <label for="operator">操作员姓名</label>
+            <select id="operator" required>
+              <option value="阿部">阿部</option>
+              <option value="雨宮">雨宮</option>
+              <option value="川越">川越</option>
+              <option value="矢野">矢野</option>
+              <option value="緒澤">緒澤</option>
+              <option value="石田">石田</option>
+              <option value="島雄">島雄</option>
+              <option value="趙">趙</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <label for="note">备注</label>
+          <textarea id="note" placeholder="可选"></textarea>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button type="button" id="deleteBtn" style="display:none;background:linear-gradient(180deg,#2a0b0b,#3a0a0a);border-color:#7f1d1d">删除</button>
+        <div style="flex:1"></div>
+        <button type="button" id="cancelBtn">取消</button>
+        <button type="submit" id="saveBtn" class="btn-income">保存</button>
+      </div>
+    </form>
+  </dialog>
+  <div id="dlg-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(2px);z-index:9998"></div>
+
+  <script>
+    const STORAGE_KEY = 'mm_records_v1';
+    let records = [];
+
+    const $ = (id)=>document.getElementById(id);
+    const tbody = $('tbody');
+    const balanceEl = $('balance');
+    const searchEl = $('search');
+    const typeFilterEl = $('typeFilter');
+    const sortByEl = $('sortBy');
+
+    const editor = $('editor');
+    const form = $('form');
+    const recordId = $('recordId');
+    const recordType = $('recordType');
+    const amount = $('amount');
+    const time = $('time');
+    const item = $('item');
+    const operator = $('operator');
+    const note = $('note');
+    const dialogTitle = $('dialogTitle');
+    const deleteBtn = $('deleteBtn');
+    const cancelBtn = $('cancelBtn');
+    const closeDialog = $('closeDialog');
+
+    const btnIncome = $('btn-income');
+    const btnExpense = $('btn-expense');
+    const btnClear = $('btn-clear');
+    const exportCsv = $('exportCsv');
+    const exportJson = $('exportJson');
+
+    function load(){
+      try{ records = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }
+      catch{ records = []; }
+    }
+    function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); }
+
+    function fmtCurrency(n){
+      return new Intl.NumberFormat('zh-CN',{style:'currency',currency:'CNY',maximumFractionDigits:2}).format(n);
+    }
+
+    function computeBalance(){
+      return records.reduce((sum,r)=> sum + (r.type==='income'? r.amount : -r.amount), 0);
+    }
+
+    function updateBalance(){ balanceEl.textContent = '¥ ' + computeBalance().toLocaleString('zh-CN', {maximumFractionDigits:2}); }
+
+    function render(){
+      const q = searchEl.value.trim().toLowerCase();
+      const t = typeFilterEl.value;
+      const sorted = [...records].sort((a,b)=>{
+        switch (sortByEl.value){
+          case 'date_asc': return new Date(a.time)-new Date(b.time);
+          case 'amount_desc': return b.amount-a.amount;
+          case 'amount_asc': return a.amount-b.amount;
+          case 'date_desc': default: return new Date(b.time)-new Date(a.time);
+        }
+      });
+      const filtered = sorted.filter(r=> (t==='all'||r.type===t) && ([r.item,r.operator,r.note].join(' ').toLowerCase().includes(q)));
+
+      tbody.innerHTML = '';
+      for(const r of filtered){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="muted">${new Date(r.time).toLocaleString()}</td>
+          <td><span class="pill ${r.type==='income'?'in':'out'}">${r.type==='income'?'收入':'支出'}</span></td>
+          <td>${escapeHtml(r.item)}</td>
+          <td>${escapeHtml(r.operator||'')}</td>
+          <td class="muted">${escapeHtml(r.note||'')}</td>
+          <td class="amount ${r.type==='income'?'pos':'neg'}">${r.type==='income'?'+':'-'}${fmtCurrency(r.amount).replace('¥\u00A0','')}</td>
+          <td>
+            <button data-action="edit" data-id="${r.id}">编辑</button>
+            <button data-action="remove" data-id="${r.id}" style="border-color:#7f1d1d">删除</button>
+          </td>`;
+        tbody.appendChild(tr);
+      }
+      updateBalance();
+    }
+
+    function escapeHtml(s){
+      return (s||'').replace(/[&<>"']/g, c=>({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'
+      })[c]);
+    }
+
+    function openDialog(type, r){
+      recordType.value = type; // 'income' | 'expense'
+      recordId.value = r?.id || '';
+      amount.value = r?.amount ?? '';
+      time.value = r?.time ? toLocalInputValue(new Date(r.time)) : toLocalInputValue(new Date());
+      item.value = r?.item ?? 'お小遣い';
+      operator.value = r?.operator ?? '趙';
+      note.value = r?.note ?? '';
+      dialogTitle.textContent = r ? '编辑记录' : (type==='income'?'新增收入':'新增支出');
+      deleteBtn.style.display = r ? 'inline-block' : 'none';
+      document.getElementById('saveBtn').className = type==='income' ? 'btn-income' : 'btn-expense';
+
+      const supportsDialog = typeof HTMLDialogElement === 'function' && typeof editor.showModal === 'function';
+      const overlay = document.getElementById('dlg-overlay');
+      if (supportsDialog) {
+        editor.showModal();
+      } else {
+        editor.setAttribute('open','');
+        editor.style.position = 'fixed';
+        editor.style.zIndex = '9999';
+        editor.style.top = '50%';
+        editor.style.left = '50%';
+        editor.style.transform = 'translate(-50%, -50%)';
+        overlay.style.display = 'block';
+      }
+      amount.focus();
+    }
+
+    function toLocalInputValue(d){
+      const pad = n=> String(n).padStart(2,'0');
+      const yyyy = d.getFullYear();
+      const mm = pad(d.getMonth()+1);
+      const dd = pad(d.getDate());
+      const hh = pad(d.getHours());
+      const mi = pad(d.getMinutes());
+      return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+    }
+
+    function upsertFromForm(){
+      const id = recordId.value || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
+      const rec = {
+        id,
+        type: recordType.value === 'expense' ? 'expense' : 'income',
+        amount: Number(amount.value||0),
+        time: new Date(time.value).toISOString(),
+        item: item.value,
+        operator: operator.value,
+        note: note.value.trim()
+      };
+      if(!(rec.amount>0)) { alert('请输入大于 0 的金额'); return false; }
+      if(!rec.item) { alert('请选择项目名称'); return false; }
+
+      const idx = records.findIndex(r=>r.id===id);
+      if(idx>=0) records[idx] = rec; else records.push(rec);
+      save();
+      render();
+      closeEditor();
+      return true;
+    }
+
+    function removeRecord(id){
+      const r = records.find(x=>x.id===id);
+      if(!r) return;
+      if(confirm(`确定要删除「${r.item}」这条${r.type==='income'?'收入':'支出'}记录吗？`)){
+        records = records.filter(x=>x.id!==id);
+        save();
+        render();
+      }
+    }
+
+    function clearAll(){
+      if(records.length===0) return alert('没有可清空的记录');
+      if(confirm('此操作将删除所有记录，且不可恢复。是否继续？')){
+        records = [];
+        save();
+        render();
+      }
+    }
+
+    function download(filename, content, type='text/plain'){ 
+      const blob = new Blob([content], {type});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
+    }
+    function exportAsCSV(){
+      const header = ['id','类型','金额','时间','项目名称','操作员','备注'];
+      const rows = records.map(r=>[
+        r.id,
+        r.type==='income'?'收入':'支出',
+        r.amount,
+        new Date(r.time).toLocaleString(),
+        r.item.replaceAll('"','""'),
+        (r.operator||'').replaceAll('"','""'),
+        (r.note||'').replaceAll('"','""')
+      ]);
+      const csv = [header, ...rows].map(row=> row.map(x=>`"${String(x)}"`).join(',')).join('\n');
+      download(`记录_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.csv`, csv, 'text/csv;charset=utf-8');
+    }
+    function exportAsJSON(){
+      download(`records_${Date.now()}.json`, JSON.stringify(records, null, 2), 'application/json');
+    }
+
+    btnIncome.addEventListener('click', ()=> openDialog('income'));
+    btnExpense.addEventListener('click', ()=> openDialog('expense'));
+    btnClear.addEventListener('click', clearAll);
+    exportCsv.addEventListener('click', exportAsCSV);
+    exportJson.addEventListener('click', exportAsJSON);
+
+    tbody.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button');
+      if(!btn) return;
+      const id = btn.getAttribute('data-id');
+      const action = btn.getAttribute('data-action');
+      if(action==='edit'){
+        const r = records.find(x=>x.id===id);
+        if(r) openDialog(r.type, r);
+      } else if(action==='remove'){
+        removeRecord(id);
+      }
+    });
+
+    [searchEl,typeFilterEl,sortByEl].forEach(el=> el.addEventListener('input', render));
+
+    form.addEventListener('submit', (e)=>{ e.preventDefault(); upsertFromForm(); });
+    cancelBtn.addEventListener('click', ()=> closeEditor());
+    closeDialog.addEventListener('click', ()=> closeEditor());
+    deleteBtn.addEventListener('click', ()=> removeRecord(recordId.value));
+
+    function closeEditor(){
+      const overlay = document.getElementById('dlg-overlay');
+      if (typeof editor.close === 'function') {
+        try { editor.close(); } catch(_) {}
+      }
+      editor.removeAttribute('open');
+      overlay.style.display = 'none';
+    }
+
+    load();
+    render();
+  </script>
 </body>
 </html>
