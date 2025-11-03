@@ -4,339 +4,80 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#ffffff" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <title>金銭管理</title>
+  <link rel="manifest" href="manifest.webmanifest?v=debug1" />
+  <title>金銭管理（デバッグ）</title>
   <style>
-    :root{
-      --bg:#f7f7fb; --text:#1f2353; --muted:#6b6f99; --ring:#dcdbe7; --card:#ffffff;
-      --income:#f2c8c8; --income-border:#e5b4b4; --expense:#c9f3d7; --expense-border:#a8e7c0;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    body{margin:0;background:#f7f7fb;color:#1f2353;font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',ui-sans-serif}
+    .banner{background:#fff8e1;border-bottom:1px solid #f5d27b;color:#7a5b00;padding:8px 12px;text-align:center;font-weight:700}
     .container{max-width:1100px;margin:24px auto;padding:0 16px}
     header{display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center}
     .brand img{height:60px}
     .title-line{font-weight:800;letter-spacing:.12em;margin-top:6px}
-    .balance-card{background:var(--card);border:1px solid #eceaf5;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.06);padding:16px 22px;text-align:center;margin:10px 0}
+    .balance-card{background:#fff;border:1px solid #eceaf5;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.06);padding:16px 22px;text-align:center;margin:10px 0}
     .balance-value{font-size:40px;font-weight:800;letter-spacing:.06em}
     .actions{display:flex;gap:24px;justify-content:center;align-items:center;width:100%;margin:8px 0 12px}
     .big-btn{flex:1 1 48%;max-width:460px;height:88px;border-radius:999px;border:1px solid;box-shadow:0 6px 16px rgba(0,0,0,.08);font-size:32px;font-weight:900;letter-spacing:.3em;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .06s ease}
-    .big-btn:hover{transform:translateY(-1px)}
-    .btn-income{background:var(--income);border-color:var(--income-border);color:#13164b}
-    .btn-expense{background:var(--expense);border-color:var(--expense-border);color:#13164b}
-    .card{background:var(--card);border:1px solid #e8e6f0;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.06)}
-    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:16px 0;padding:14px 16px;background:#f3f0f7;border-color:#e5e1ec;border-radius:16px}
-    .toolbar input[type="text"]{flex:1;min-width:220px;border:1px solid #e0dcf0;background:#f7f3ff;color:var(--text);padding:12px;border-radius:12px}
-    .toolbar .export{margin-left:auto;display:flex;gap:10px}
-    .toolbar button{border:1px solid #d8d8e2;background:#fff;color:#494b78;padding:8px 12px;border-radius:12px;cursor:pointer}
-    .table-wrap{overflow:auto}
-    table{width:100%;border-collapse:separate;border-spacing:0;min-width:780px}
-    thead th{position:sticky;top:0;background:#faf9fe;color:var(--muted);z-index:1}
-    th,td{padding:12px 14px;text-align:left;border-bottom:1px solid #eee}
-    tr:hover td{background:#fbfbff}
-    .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid #d6d6e2}
-    .pill.in{background:#eaf8ef;border-color:var(--expense-border);color:#1f7a3a}
-    .pill.out{background:#fdeced;border-color:var(--income-border);color:#922b2b}
-    .amount.pos{color:#1f7a3a;font-weight:700}.amount.neg{color:#922b2b;font-weight:700}
-    dialog{border:none;border-radius:24px;padding:0;max-width:760px;width:92%;background:#ffffff;color:var(--text);box-shadow:0 28px 96px rgba(0,0,0,.35);border:1px solid #eceaf5;}
+    .btn-income{background:#f2c8c8;border-color:#e5b4b4;color:#13164b}
+    .btn-expense{background:#c9f3d7;border-color:#a8e7c0;color:#13164b}
+    dialog{border:none;border-radius:24px;padding:0;max-width:760px;width:92%;background:#ffffff;color:#1f2353;box-shadow:0 28px 96px rgba(0,0,0,.35);border:1px solid #eceaf5;}
     .dialog-header{display:flex;justify-content:space-between;align-items:center;padding:20px 22px;border-bottom:1px solid #eee}
-    .dialog-header strong{font-size:22px;color:#1f2353;letter-spacing:.18em}
     .dialog-body{padding:22px}
-    .dialog-footer{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 22px;border-top:1px solid #eee;background:#fff}
+    .dialog-footer{display:flex;justify-content:flex-end;gap:10px;padding:18px 22px;border-top:1px solid #eee;background:#fff}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
     label{font-size:14px;color:#8a8faf;font-weight:600}
-    input, select, textarea{width:100%;border:1px solid var(--ring);background:#fff;color:var(--text);padding:14px 16px;border-radius:12px;font-size:18px}
-    textarea{min-height:90px;resize:vertical}
-    .footer-left button{border:1px solid #dcdbe7;background:#fff;color:#2d2d4f;padding:14px 24px;border-radius:999px;font-size:22px;font-weight:900;letter-spacing:.2em;cursor:pointer}
-    .footer-right button{border:1px solid #dcdbe7;background:#f2eefe;color:#1f2353;padding:14px 24px;border-radius:999px;font-size:22px;font-weight:900;letter-spacing:.2em;cursor:pointer}
-    .footer-left .delete{background:#fff1f1;color:#7a1f1f}
-    @media (max-width:640px){
-      .grid{grid-template-columns:1fr}
-      .big-btn{flex:1 1 100%;height:74px;font-size:26px}
-      .balance-value{font-size:32px}
-      .dialog-footer{flex-direction:column;gap:10px}
-      .footer-left, .footer-right{width:100%;display:flex;gap:10px;justify-content:space-between}
-    }
+    input, select, textarea{width:100%;border:1px solid #dcdbe7;background:#fff;color:#1f2353;padding:14px 16px;border-radius:12px;font-size:18px}
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(2px);z-index:9998}
   </style>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(console.error);
-      });
-    }
-  </script>
 </head>
 <body>
+  <div class="banner">デバッグ版（サービスワーカーなし） — ボタンを押すと必ずダイアログが開くはずです</div>
   <div class="container">
     <header>
       <div class="brand"><img src="logo202212.png" alt="株式会社ELY｜NPO法人あい・えーる"></div>
       <div class="title-line">仁平伸一さん金銭管理システム</div>
-      <div class="balance-card">
-        <div class="balance-value" id="balance">¥ 0</div>
-      </div>
+      <div class="balance-card"><div class="balance-value" id="balance">¥ 0</div></div>
       <div class="actions">
         <button class="big-btn btn-income" id="btn-income">収　入</button>
         <button class="big-btn btn-expense" id="btn-expense">支　出</button>
       </div>
     </header>
-
-    <div class="card toolbar">
-      <input type="text" id="search" placeholder="項目、世話人、備考を探す" />
-      <select id="typeFilter" title="種類">
-        <option value="all">すべて</option>
-        <option value="income">収入</option>
-        <option value="expense">支出</option>
-      </select>
-      <select id="sortBy" title="並び替え">
-        <option value="date_desc">日時（新→旧）</option>
-        <option value="date_asc">日時（旧→新）</option>
-        <option value="amount_desc">金額（高→低）</option>
-        <option value="amount_asc">金額（低→高）</option>
-      </select>
-      <div class="export">
-        <button id="exportCsv">CSVに書き出す</button>
-        <button id="exportJson">JSONに書き出す</button>
-      </div>
-    </div>
-
-    <div class="card table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>時間</th><th>種類</th><th>項目</th><th>世話人</th><th>備考</th><th>金額</th><th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
   </div>
 
   <dialog id="editor">
     <form id="form" method="dialog">
-      <div class="dialog-header">
-        <strong id="dialogTitle">新規記録</strong>
-        <button type="button" id="closeDialog" aria-label="閉じる" style="background:transparent;border:none;color:#8a8faf;font-size:22px;cursor:pointer">×</button>
-      </div>
+      <div class="dialog-header"><strong id="dialogTitle">新規記録</strong><button type="button" id="closeDialog" style="background:transparent;border:none;font-size:22px;cursor:pointer">×</button></div>
       <div class="dialog-body">
-        <input type="hidden" id="recordId" />
         <input type="hidden" id="recordType" />
         <div class="grid">
-          <div>
-            <label for="amount">金額</label>
-            <input id="amount" type="number" step="1" min="0" required placeholder="例：2000" />
-          </div>
-          <div>
-            <label for="time">時間</label>
-            <input id="time" type="datetime-local" required />
-          </div>
-          <div>
-            <label for="item">項目</label>
-            <select id="item" required>
-              <option value="お小遣い">お小遣い</option>
-              <option value="バス代">バス代</option>
-              <option value="移動支援">移動支援</option>
-              <option value="その他">その他</option>
-            </select>
-          </div>
-          <div>
-            <label for="operator">世話人</label>
-            <select id="operator" required>
-              <option value="阿部">阿部</option>
-              <option value="雨宮">雨宮</option>
-              <option value="川越">川越</option>
-              <option value="矢野">矢野</option>
-              <option value="緒澤">緒澤</option>
-              <option value="石田">石田</option>
-              <option value="島雄">島雄</option>
-              <option value="趙">趙</option>
-            </select>
-          </div>
-        </div>
-        <div style="margin-top:12px">
-          <label for="note">備考</label>
-          <textarea id="note" placeholder="任意"></textarea>
+          <div><label for="amount">金額</label><input id="amount" type="number" placeholder="例：2000" /></div>
+          <div><label for="time">時間</label><input id="time" type="datetime-local" /></div>
+          <div><label for="item">項目</label><select id="item"><option>お小遣い</option><option>バス代</option><option>移動支援</option><option>その他</option></select></div>
+          <div><label for="operator">世話人</label><select id="operator"><option>阿部</option><option>雨宮</option><option>川越</option><option>矢野</option><option>緒澤</option><option>石田</option><option>島雄</option><option>趙</option></select></div>
         </div>
       </div>
-      <div class="dialog-footer">
-        <div class="footer-left">
-          <button type="button" class="delete" id="deleteBtn" style="display:none">削　除</button>
-        </div>
-        <div class="footer-right">
-          <button type="button" id="cancelBtn">取り消し</button>
-          <button type="submit" id="saveBtn">保　存</button>
-        </div>
-      </div>
+      <div class="dialog-footer"><button type="button" id="cancelBtn">取り消し</button><button type="submit" id="saveBtn">保　存</button></div>
     </form>
   </dialog>
-  <div id="dlg-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(2px);z-index:9998"></div>
+  <div id="overlay" class="overlay"></div>
 
   <script>
-    const STORAGE_KEY = 'mm_records_v1';
-    let records = [];
-
     const $ = (id)=>document.getElementById(id);
-    const tbody = $('tbody');
-    const balanceEl = $('balance');
-    const searchEl = $('search');
-    const typeFilterEl = $('typeFilter');
-    const sortByEl = $('sortBy');
-
-    const editor = $('editor');
-    const form = $('form');
-    const recordId = $('recordId');
-    const recordType = $('recordType');
-    const amount = $('amount');
-    const time = $('time');
-    const item = $('item');
-    const operator = $('operator');
-    const note = $('note');
-    const dialogTitle = $('dialogTitle');
-    const deleteBtn = $('deleteBtn');
-    const cancelBtn = $('cancelBtn');
-    const closeDialog = $('closeDialog');
-
-    const btnIncome = $('btn-income');
-    const btnExpense = $('btn-expense');
-    const exportCsv = $('exportCsv');
-    const exportJson = $('exportJson');
-
-    function load(){ try{ records = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch{ records = []; } }
-    function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); }
-
-    function fmtJPY(n){ return new Intl.NumberFormat('ja-JP',{style:'currency',currency:'JPY',maximumFractionDigits:0}).format(n); }
-    function computeBalance(){ return records.reduce((sum,r)=> sum + (r.type==='income'? r.amount : -r.amount), 0); }
-    function updateBalance(){ document.getElementById('balance').textContent = fmtJPY(computeBalance()); }
-
-    function render(){
-      const q = searchEl.value.trim().toLowerCase();
-      const t = typeFilterEl.value;
-      const sorted = [...records].sort((a,b)=>{
-        switch (sortByEl.value){
-          case 'date_asc': return new Date(a.time)-new Date(b.time);
-          case 'amount_desc': return b.amount-a.amount;
-          case 'amount_asc': return a.amount-b.amount;
-          case 'date_desc': default: return new Date(b.time)-new Date(a.time);
-        }
-      });
-      const filtered = sorted.filter(r=> (t==='all'||r.type===t) && ([r.item,r.operator,r.note].join(' ').toLowerCase().includes(q)));
-
-      tbody.innerHTML = '';
-      for(const r of filtered){
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="muted">${new Date(r.time).toLocaleString('ja-JP')}</td>
-          <td><span class="pill ${r.type==='income'?'in':'out'}">${r.type==='income'?'収入':'支出'}</span></td>
-          <td>${escapeHtml(r.item)}</td>
-          <td>${escapeHtml(r.operator||'')}</td>
-          <td class="muted">${escapeHtml(r.note||'')}</td>
-          <td class="amount ${r.type==='income'?'pos':'neg'}">${r.type==='income'?'+':'-'}${fmtJPY(r.amount)}</td>
-          <td>
-            <button data-action="edit" data-id="${r.id}">編集</button>
-            <button data-action="remove" data-id="${r.id}">削除</button>
-          </td>`;
-        tbody.appendChild(tr);
-      }
-      updateBalance();
+    const editor = $('editor'); const overlay = $('overlay');
+    function openDialog(type){
+      $('recordType').value = type;
+      $('dialogTitle').textContent = type==='income' ? '新規収入' : '新規支出';
+      const supportsDialog = typeof HTMLDialogElement==='function' && typeof editor.showModal === 'function';
+      if(supportsDialog){ editor.showModal(); } else { editor.setAttribute('open',''); overlay.style.display='block'; }
     }
-
-    function escapeHtml(s){ return (s||'').replace(/[&<>\"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\\'':'&#39;'})[c]); }
-    function toLocalInputValue(d){ const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; }
-
-    function openDialog(type, r){
-      recordType.value = type;
-      recordId.value = r?.id || '';
-      amount.value = r?.amount ?? '';
-      time.value = r?.time ? toLocalInputValue(new Date(r.time)) : toLocalInputValue(new Date());
-      item.value = r?.item ?? 'お小遣い';
-      operator.value = r?.operator ?? '趙';
-      note.value = r?.note ?? '';
-      dialogTitle.textContent = r ? '編集' : (type==='income'?'新規収入':'新規支出');
-
-      const supportsDialog = typeof HTMLDialogElement === 'function' && typeof editor.showModal === 'function';
-      const overlay = document.getElementById('dlg-overlay');
-      if (supportsDialog) editor.showModal();
-      else { editor.setAttribute('open',''); editor.style.position='fixed'; editor.style.zIndex='9999'; editor.style.top='50%'; editor.style.left='50%'; editor.style.transform='translate(-50%, -50%)'; overlay.style.display='block'; }
-      amount.focus();
-      deleteBtn.style.display = r ? 'inline-block' : 'none';
+    function closeDialog(){
+      if(typeof editor.close==='function'){ try{ editor.close(); }catch(e){} }
+      editor.removeAttribute('open'); overlay.style.display='none';
     }
-
-    function upsertFromForm(){
-      const id = recordId.value || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
-      const rec = {
-        id,
-        type: recordType.value === 'expense' ? 'expense' : 'income',
-        amount: Number(amount.value||0),
-        time: new Date(time.value).toISOString(),
-        item: item.value,
-        operator: operator.value,
-        note: note.value.trim()
-      };
-      if(!(rec.amount>0)) { alert('0より大きい金額を入力してください'); return false; }
-      if(!rec.item) { alert('項目を選択してください'); return false; }
-      const idx = records.findIndex(r=>r.id===id);
-      if(idx>=0) records[idx] = rec; else records.push(rec);
-      save(); render(); closeEditor(); return true;
-    }
-
-    function removeRecord(id){
-      const r = records.find(x=>x.id===id); if(!r) return;
-      if(confirm(`「${r.item}」の${r.type==='income'?'収入':'支出'}を削除しますか？`)){
-        records = records.filter(x=>x.id!==id); save(); render();
-      }
-    }
-
-    function download(filename, content, type='text/plain'){
-      const blob = new Blob([content], {type});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click();
-      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
-    }
-    function exportAsCSV(){
-      const header = ['id','種類','金額','時間','項目','世話人','備考'];
-      const rows = records.map(r=>[
-        r.id, r.type==='income'?'収入':'支出', r.amount,
-        new Date(r.time).toLocaleString('ja-JP'),
-        r.item.replaceAll('\"','\"\"'),
-        (r.operator||'').replaceAll('\"','\"\"'),
-        (r.note||'').replaceAll('\"','\"\"')
-      ]);
-      const csv = [header, ...rows].map(row=> row.map(x=>`\"${String(x)}\"`).join(',')).join('\\n');
-      download(`記録_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.csv`, csv, 'text/csv;charset=utf-8');
-    }
-    function exportAsJSON(){
-      download(`records_${Date.now()}.json`, JSON.stringify(records, null, 2), 'application/json');
-    }
-
-    function closeEditor(){
-      const overlay = document.getElementById('dlg-overlay');
-      if (typeof editor.close === 'function') { try { editor.close(); } catch(_) {} }
-      editor.removeAttribute('open'); overlay.style.display = 'none';
-    }
-
-    // events
-    btnIncome.addEventListener('click', ()=> openDialog('income'));
-    btnExpense.addEventListener('click', ()=> openDialog('expense'));
-    exportCsv.addEventListener('click', exportAsCSV);
-    exportJson.addEventListener('click', exportAsJSON);
-    document.getElementById('tbody').addEventListener('click', (e)=>{
-      const btn = e.target.closest('button'); if(!btn) return;
-      const id = btn.getAttribute('data-id'); const action = btn.getAttribute('data-action');
-      if(action==='edit'){ const r = records.find(x=>x.id===id); if(r) openDialog(r.type, r); }
-      else if(action==='remove'){ removeRecord(id); }
-    });
-    ['search','typeFilter','sortBy'].forEach(id=> document.getElementById(id).addEventListener('input', render));
-    document.getElementById('form').addEventListener('submit', (e)=>{ e.preventDefault(); upsertFromForm(); });
-    document.getElementById('cancelBtn').addEventListener('click', ()=> closeEditor());
-    document.getElementById('closeDialog').addEventListener('click', ()=> closeEditor());
-    document.getElementById('deleteBtn').addEventListener('click', ()=> removeRecord(document.getElementById('recordId').value));
-
-    function load(){ try{ records = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch{ records = []; } }
-    function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); }
-    // init
-    load(); render();
+    document.getElementById('btn-income').addEventListener('click', ()=> openDialog('income'));
+    document.getElementById('btn-expense').addEventListener('click', ()=> openDialog('expense'));
+    document.getElementById('closeDialog').addEventListener('click', closeDialog);
+    document.getElementById('cancelBtn').addEventListener('click', closeDialog);
   </script>
 </body>
 </html>
