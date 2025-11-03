@@ -1,12 +1,14 @@
 {
-  "name": "金銭管理（デバッグ）",
+  "name": "金銭管理",
   "short_name": "金銭管理",
-  "start_url": "./index.html?v=debug1",
+  "description": "オフラインでも使える収支管理（ELY｜NPO法人あい・えーる）",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
