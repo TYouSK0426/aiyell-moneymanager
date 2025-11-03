@@ -1,5 +1,0 @@
-const CACHE_NAME='money-manager-jp-fixed-v1';
-const CORE=['./','./index.html','./manifest.webmanifest'];
-self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(CORE)));self.skipWaiting();});
-self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.map(k=>k!==CACHE_NAME?caches.delete(k):null))));self.clients.claim();});
-self.addEventListener('fetch',e=>{const r=e.request;if(r.mode==='navigate'||(r.headers.get('accept')||'').includes('text/html')){e.respondWith(fetch(r).then(res=>{const copy=res.clone();caches.open(CACHE_NAME).then(c=>c.put(r,copy));return res;}).catch(()=>caches.match(r).then(m=>m||caches.match('./index.html'))));return;}e.respondWith(caches.match(r).then(m=>m||fetch(r).then(res=>{const copy=res.clone();caches.open(CACHE_NAME).then(c=>c.put(r,copy));return res;})));});
